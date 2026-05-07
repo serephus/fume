@@ -1,0 +1,21 @@
+[package]
+name = "fume-core"
+version = "0.0.2"
+edition = "2024"
+license = "GLWTPL"
+description = "A strongly-opinionated Rust wrapper for steam web APIs."
+repository = "https://github.com/dearfl/fume"
+keywords = [ "steam", "api" ]
+exclude = [ ".*", "flake.*" ]
+
+[dependencies]
+serde = { workspace = true }
+serde_json = { workspace = true }
+serde_repr = { workspace = true }
+
+[features]
+default = []
+deny-unknown-fields = []
+
+[lints.rust]
+unsafe_code = "forbid"

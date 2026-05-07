@@ -1,0 +1,34 @@
+[package]
+name = "fume"
+version = "0.0.2"
+edition = "2024"
+license = "GLWTPL"
+description = "A strongly-opinionated Rust wrapper for steam web APIs."
+repository = "https://github.com/dearfl/fume"
+readme = "../README.md"
+keywords = [ "steam", "api" ]
+exclude = [ ".*", "flake.*" ]
+
+[dependencies]
+fume-core = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+reqwest = { workspace = true, optional = true }
+
+[features]
+default = ["reqwest"]
+reqwest = ["dep:reqwest"]
+
+[dev-dependencies]
+anyhow = { workspace = true }
+reqwest = { workspace = true }
+tokio = { workspace = true }
+
+[[example]]
+name = "get_supported_api_list"
+path = "examples/get_supported_api_list.rs"
+required-features = ["reqwest"]
+
+[lints.rust]
+unsafe_code = "forbid"
