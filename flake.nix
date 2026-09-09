@@ -35,6 +35,7 @@
         devShell =
           with pkgs;
           mkShell {
+            name = "fume";
             nativeBuildInputs = [ pkg-config ];
             buildInputs = [
               rust
