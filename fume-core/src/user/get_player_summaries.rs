@@ -1,55 +1,43 @@
 use serde::{Deserialize, Serialize};
-use serde_repr::{Deserialize_repr, Serialize_repr};
 
 use crate::{
-    Api, Param, Response,
-    app::AppId,
-    user::{GroupId, SteamId},
+    AppId, CommentPermission, CommunityVisibilityState, DecodeError, Endpoint, GroupId,
+    PersonaState, ProfileState, Query, Response, SteamId, SteamIds, decode_json,
 };
 
 use super::INTERFACE;
 
-#[derive(Clone, Debug)]
-pub struct SteamIds(pub Vec<SteamId>);
-
-impl Param for SteamIds {
-    fn name() -> &'static str {
-        "steamids"
-    }
-
-    fn value(&self) -> String {
-        let values: Vec<String> = self.0.iter().map(|val| val.value()).collect();
-        values.join(",")
-    }
-}
-
+/// `ISteamUser/GetPlayerSummaries/v2`
+///
+/// Fetches profile summaries for up to 100 SteamIDs at once.
 #[derive(Clone, Debug)]
 pub struct GetPlayerSummaries {
     pub steamids: SteamIds,
 }
 
 impl GetPlayerSummaries {
-    pub const METHOD: &str = "GetPlayerSummaries";
-    pub const VERSION: &str = "v2";
+    /// Fetch summaries for the given SteamIDs.
+    pub fn new(steamids: impl Into<SteamIds>) -> Self {
+        Self {
+            steamids: steamids.into(),
+        }
+    }
 }
 
-impl Api for GetPlayerSummaries {
-    fn interface() -> &'static str {
-        INTERFACE
+impl Endpoint for GetPlayerSummaries {
+    type Response = Vec<PlayerSummary>;
+
+    const INTERFACE: &'static str = INTERFACE;
+    const METHOD: &'static str = "GetPlayerSummaries";
+    const VERSION: &'static str = "v2";
+
+    fn query(&self) -> Query {
+        Query::new().param(&self.steamids)
     }
 
-    fn method() -> &'static str {
-        Self::METHOD
-    }
-
-    fn version() -> &'static str {
-        Self::VERSION
-    }
-
-    type Response = Response<PlayerSummaries>;
-
-    fn parameters(&self) -> impl Iterator<Item = (&str, String)> {
-        std::iter::once(self.steamids.param())
+    fn decode(body: &[u8]) -> Result<Self::Response, DecodeError> {
+        let raw: Response<PlayerSummaries> = decode_json(body)?;
+        Ok(raw.response.players)
     }
 }
 
@@ -59,12 +47,13 @@ pub struct PlayerSummaries {
     pub players: Vec<PlayerSummary>,
 }
 
+/// A player's public profile summary.
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[cfg_attr(feature = "deny-unknown-fields", serde(deny_unknown_fields))]
 pub struct PlayerSummary {
     pub steamid: SteamId,
     #[serde(rename = "communityvisibilitystate")]
-    pub community_visibility_state: ProfileVisibility,
+    pub community_visibility_state: CommunityVisibilityState,
     #[serde(rename = "profilestate")]
     pub profile_state: Option<ProfileState>,
     #[serde(rename = "personaname")]
@@ -95,7 +84,7 @@ pub struct PlayerSummary {
     #[serde(rename = "gameextrainfo")]
     pub game_extra_info: Option<String>,
     #[serde(rename = "commentpermission")]
-    pub comment_permission: Option<u8>,
+    pub comment_permission: Option<CommentPermission>,
     #[serde(rename = "realname")]
     pub real_name: Option<String>,
     #[serde(rename = "loccityid")]
@@ -104,31 +93,4 @@ pub struct PlayerSummary {
     pub loc_country_code: Option<String>,
     #[serde(rename = "locstatecode")]
     pub loc_state_code: Option<String>,
-}
-
-#[derive(Clone, Debug, Deserialize_repr, Serialize_repr)]
-#[repr(u8)]
-pub enum PersonaState {
-    Offline = 0,
-    Online = 1,
-    Busy = 2,
-    Away = 3,
-    Snooze = 4,
-    LookingToTrade = 5,
-    LookingToPlay = 6,
-}
-
-#[derive(Clone, Debug, Deserialize_repr, Serialize_repr)]
-#[repr(u8)]
-pub enum ProfileVisibility {
-    Private = 1,
-    FriendsOnly = 2,
-    Public = 3,
-}
-
-#[derive(Clone, Debug, Deserialize_repr, Serialize_repr)]
-#[repr(u8)]
-pub enum ProfileState {
-    Unconfigured = 0,
-    Configured = 1,
 }
