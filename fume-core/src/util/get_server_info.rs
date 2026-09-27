@@ -1,34 +1,41 @@
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
+
 use serde::{Deserialize, Serialize};
 
-use crate::Api;
+use crate::{DecodeError, Endpoint, Query, decode_json};
 
 use super::INTERFACE;
 
-#[derive(Clone, Debug)]
+/// `ISteamWebAPIUtil/GetServerInfo/v1`
+///
+/// Returns the current time according to the API server.
+#[derive(Clone, Debug, Default)]
 pub struct GetServerInfo;
 
 impl GetServerInfo {
-    pub const METHOD: &str = "GetServerInfo";
-    pub const VERSION: &str = "v1";
+    /// Create the request.
+    pub fn new() -> Self {
+        Self
+    }
 }
 
-impl Api for GetServerInfo {
-    fn interface() -> &'static str {
-        INTERFACE
+impl Endpoint for GetServerInfo {
+    type Response = ServerInfo;
+
+    const INTERFACE: &'static str = INTERFACE;
+    const METHOD: &'static str = "GetServerInfo";
+    const VERSION: &'static str = "v1";
+
+    fn query(&self) -> Query {
+        Query::new()
     }
 
-    fn method() -> &'static str {
-        Self::METHOD
-    }
-
-    fn version() -> &'static str {
-        Self::VERSION
-    }
-
-    type Response = GetServerInfoResponse;
-
-    fn parameters(&self) -> impl Iterator<Item = (&str, String)> {
-        std::iter::empty()
+    fn decode(body: &[u8]) -> Result<Self::Response, DecodeError> {
+        let raw: GetServerInfoResponse = decode_json(body)?;
+        Ok(ServerInfo {
+            time: UNIX_EPOCH + Duration::from_secs(raw.servertime),
+            time_string: raw.servertimestring,
+        })
     }
 }
 
@@ -37,4 +44,11 @@ impl Api for GetServerInfo {
 pub struct GetServerInfoResponse {
     pub servertime: u64,
     pub servertimestring: String,
+}
+
+/// Server time, with the Unix timestamp normalised to a [`SystemTime`].
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct ServerInfo {
+    pub time: SystemTime,
+    pub time_string: String,
 }

@@ -1,0 +1,36 @@
+[package]
+name = "fume-reqwest"
+description = "reqwest backends for the fume Steam Web API client"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+keywords.workspace = true
+readme = "../README.md"
+exclude = [ ".*", "flake.*" ]
+
+[dependencies]
+fume = { workspace = true }
+reqwest = { workspace = true }
+
+[features]
+default = ["async"]
+async = []
+blocking = ["reqwest/blocking"]
+
+[dev-dependencies]
+anyhow = { workspace = true }
+tokio = { workspace = true }
+
+[[example]]
+name = "async_get_supported_api_list"
+path = "examples/async_get_supported_api_list.rs"
+required-features = ["async"]
+
+[[example]]
+name = "blocking_get_supported_api_list"
+path = "examples/blocking_get_supported_api_list.rs"
+required-features = ["blocking"]
+
+[lints.rust]
+unsafe_code = "forbid"

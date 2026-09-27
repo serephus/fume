@@ -1,17 +1,18 @@
-use fume_core::util::{
-    get_server_info::GetServerInfoResponse, get_supported_api_list::GetSupportedApiListResponse,
+use fume_core::{
+    Endpoint,
+    util::{get_server_info::GetServerInfo, get_supported_api_list::GetSupportedApiList},
 };
 
 #[test]
 fn get_supported_apis_decode() {
-    let content = std::fs::read_to_string("./tests/responses/get_supported_apis.json").unwrap();
-    let response: GetSupportedApiListResponse = serde_json::from_str(&content).unwrap();
-    println!("{:#?}", response);
+    let content = std::fs::read("./tests/responses/get_supported_apis.json").unwrap();
+    let interfaces = GetSupportedApiList::decode(&content).unwrap();
+    assert!(!interfaces.is_empty());
 }
 
 #[test]
 fn get_server_info_decode() {
-    let content = std::fs::read_to_string("./tests/responses/get_server_info.json").unwrap();
-    let response: GetServerInfoResponse = serde_json::from_str(&content).unwrap();
-    println!("{:#?}", response);
+    let content = std::fs::read("./tests/responses/get_server_info.json").unwrap();
+    let info = GetServerInfo::decode(&content).unwrap();
+    assert_eq!(info.time_string, "Mon Jun 16 21:21:19 2025");
 }
