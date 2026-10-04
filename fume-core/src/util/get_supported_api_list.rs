@@ -1,34 +1,37 @@
 use serde::{Deserialize, Serialize};
 
-use crate::Api;
+use crate::{DecodeError, Endpoint, Query, decode_json};
 
 use super::INTERFACE;
 
-#[derive(Clone, Debug)]
+/// `ISteamWebAPIUtil/GetSupportedAPIList/v1`
+///
+/// Lists the interfaces and methods the API exposes. The response differs
+/// depending on whether the request carries an API key.
+#[derive(Clone, Debug, Default)]
 pub struct GetSupportedApiList;
 
 impl GetSupportedApiList {
-    pub const METHOD: &str = "GetSupportedAPIList";
-    pub const VERSION: &str = "v1";
+    /// Create the request.
+    pub fn new() -> Self {
+        Self
+    }
 }
 
-impl Api for GetSupportedApiList {
-    fn interface() -> &'static str {
-        INTERFACE
+impl Endpoint for GetSupportedApiList {
+    type Response = Vec<Interface>;
+
+    const INTERFACE: &'static str = INTERFACE;
+    const METHOD: &'static str = "GetSupportedAPIList";
+    const VERSION: &'static str = "v1";
+
+    fn query(&self) -> Query {
+        Query::new()
     }
 
-    fn method() -> &'static str {
-        Self::METHOD
-    }
-
-    fn version() -> &'static str {
-        Self::VERSION
-    }
-
-    type Response = GetSupportedApiListResponse;
-
-    fn parameters(&self) -> impl Iterator<Item = (&str, String)> {
-        std::iter::empty()
+    fn decode(body: &[u8]) -> Result<Self::Response, DecodeError> {
+        let raw: GetSupportedApiListResponse = decode_json(body)?;
+        Ok(raw.apilist.interfaces)
     }
 }
 

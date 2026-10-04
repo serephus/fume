@@ -1,3 +1,5 @@
+//! `ISteamWebAPIUtil` endpoints.
+
 pub(crate) const INTERFACE: &str = "ISteamWebAPIUtil";
 
 pub mod get_server_info;

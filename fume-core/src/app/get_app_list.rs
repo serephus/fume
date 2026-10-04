@@ -1,34 +1,47 @@
 use serde::{Deserialize, Serialize};
 
-use crate::{Api, app::AppId};
+use crate::{AppId, DecodeError, Endpoint, Query, decode_json};
 
 use super::INTERFACE;
 
-#[derive(Clone, Debug)]
-pub struct GetAppList;
-
-impl GetAppList {
-    pub const METHOD: &str = "GetAppList";
-    pub const VERSION: &str = "v2";
+/// `ISteamApps/GetAppList/v2`
+///
+/// Returns the full list of publicly visible applications. The list is large
+/// (tens of thousands of entries); use the optional filters to page through it.
+#[derive(Clone, Debug, Default)]
+pub struct GetAppList {
+    /// Only return apps changed since this Unix timestamp.
+    pub if_modified_since: Option<u32>,
+    /// Return apps with an id greater than this.
+    pub last_appid: Option<AppId>,
+    /// Maximum number of apps to return.
+    pub max_results: Option<u32>,
 }
 
-impl Api for GetAppList {
-    fn interface() -> &'static str {
-        INTERFACE
+impl GetAppList {
+    /// An unfiltered listing.
+    pub fn new() -> Self {
+        Self::default()
+    }
+}
+
+impl Endpoint for GetAppList {
+    type Response = Vec<App>;
+
+    const INTERFACE: &'static str = INTERFACE;
+    const METHOD: &'static str = "GetAppList";
+    const VERSION: &'static str = "v2";
+
+    fn query(&self) -> Query {
+        Query::new()
+            .push_opt("if_modified_since", self.if_modified_since)
+            .push_opt("last_appid", self.last_appid)
+            .push_opt("max_results", self.max_results)
     }
 
-    fn method() -> &'static str {
-        Self::METHOD
-    }
-
-    fn version() -> &'static str {
-        Self::VERSION
-    }
-
-    type Response = GetAppListResponse;
-
-    fn parameters(&self) -> impl Iterator<Item = (&str, String)> {
-        std::iter::empty()
+    fn decode(body: &[u8]) -> Result<Self::Response, DecodeError> {
+        let raw: GetAppListResponse = decode_json(body)?;
+        Ok(raw.applist.apps)
     }
 }
 
@@ -44,6 +57,7 @@ pub struct AppList {
     pub apps: Vec<App>,
 }
 
+/// A single Steam application.
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[cfg_attr(feature = "deny-unknown-fields", serde(deny_unknown_fields))]
 pub struct App {
